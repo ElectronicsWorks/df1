@@ -20,5 +20,5 @@ include_directories(
 
 
 add_subdirectory("libdf1")
-#add_subdirectory("df1d")
+add_subdirectory("df1d")
 #add_subdirectory("df1viewer")

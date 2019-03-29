@@ -6,7 +6,7 @@
 
 
 
-inline std::vector<QString> getAvailablePorts() {
+inline std::vector<QString> getAvailablePorts() {
     const auto infos  = QSerialPortInfo::availablePorts();
     std::vector<QString> items;
     for(const QSerialPortInfo &info : infos) {
