@@ -4,6 +4,9 @@
 
 #include <ctime>
 #include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include <cctype>
 
 #define bzero(b,len) (memset((b), '\0', (len)), (void) 0)  
 #define bcopy(b1,b2,len) (memmove((b2), (b1), (len)), (void) 0)

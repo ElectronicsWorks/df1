@@ -1,5 +1,5 @@
 
-#include "df1.h"
+#include "Df1.h"
 
 extern word tns;
 

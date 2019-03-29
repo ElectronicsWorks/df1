@@ -1,4 +1,4 @@
-#include "df1.h"
+#include "Df1.h"
 
 extern int file;
 
@@ -62,34 +62,6 @@ int is_timeout(int start_time)
 	else
 		return SUCCES;
 }
-
-/***********************************************************************/
-void print_symbol(byte c)
-{
-	switch (c)
-	{
-	case STX:
-		puts("STX\n");
-		break;
-	case ETX:
-		puts("ETX\n");
-		break;
-	case ENQ:
-		puts("ENQ\n");
-		break;
-	case ACK:
-		puts("ACK\n");
-		break;
-	case NAK:
-		puts("NAK\n");
-		break;
-	case DLE:
-		puts("DLE\n");
-		break;
-	default: printf("??:%02X\n", c);
-	}
-}
-
 
 int calc_address(char *straddress, TThree_Address_Fields *address)
 {

@@ -1,4 +1,4 @@
-#include "inc/Df1.h"
+#include "Df1.h"
 
 extern int file;
 extern word tns;
