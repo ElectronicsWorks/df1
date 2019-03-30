@@ -134,7 +134,7 @@ int write_boolean(int plctype, char *straddress, int *value);
 
 int calc_address(char *straddress, TThree_Address_Fields *address);
 int select_fnct(char *strquery, char *address, char *value);
-int read_socket(char *rcvmsg, char *response);
+int read_socket(const char *rcvmsg, char *response);
 int server(void);
 
 
