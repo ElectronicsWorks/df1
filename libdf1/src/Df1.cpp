@@ -1,4 +1,9 @@
 #include "Df1.h"
+#include <QSerialPort>
+
+QSerialPort serialport;
+QByteArray lastread;
+
 
 extern int file;
 extern word tns;
@@ -68,11 +73,13 @@ int send_DF1(TMsg Df1Data)
 	//ready to send
 	do
 	{
-		//if (write(file, &dataSend, dataSend.size) != dataSend.size)
-		//	return error;
+		// Envoie mon beau message
+		if(serialport.write((char*)&dataSend.data,dataSend.size) == 0){
+			error=ERROR_BAD_QUERY;
+			return error;
+		}
 		time_start = time((time_t *)0);
 		//tv.tv_sec = TIME_OUT;
-		
 		//tv.tv_usec = 0;
 		//Read for ACK or NAK
 		do
@@ -191,16 +198,42 @@ int get_symbol(byte * b)
 	return DATA_FLAG;
 }
 
+void initialize(const char* com) {
+    serialport.setPortName(com);
+    serialport.setBaudRate(2400);
+    serialport.setStopBits(QSerialPort::StopBits::OneStop);
+    if(!serialport.open(QIODevice::ReadWrite)) {
+        throw "Cant open";
+    }
+}
+
+QByteArray &operator<<(QByteArray &l, quint16 r) {
+	return l<<quint8(r>>8)<<quint8(r);
+}
+
 /***********************************************************************/
 void sendResponse(byte response) // used to send NAK or ACK
 {
+	word w;
+	byte dle=DLE;
+	w=bytes2word(dle,response);
+	QByteArray ba;
+	ba<<quint16(w);
+	serialport.write(ba);
 	
 }
 
 /***********************************************************************/
 int read_byte(byte * b)
 {
-
+	if(serialport.waitForReadyRead()) {
+        lastread = serialport.readAll();
+		*b = lastread[0];
+       	printf("Read %d bytes data %s\n",lastread.length(),lastread);
+		return lastread.length();
+    }
+    printf("Cant read shit\n");
+	return 0;
 }
 
 

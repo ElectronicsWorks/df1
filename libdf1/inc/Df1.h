@@ -101,6 +101,9 @@ typedef struct {
 } TCmd4;
 
 
+
+void initialize(const char* str);
+
 // common.c
 word bytes2word(byte lowb, byte highb);
 int add_word2buffer(TBuffer * buffer, word value);

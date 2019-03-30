@@ -5,6 +5,40 @@
 #include <QtWebSockets/qwebsocket.h>
 #include <QtWebSockets/qwebsocketserver.h>
 
+
+#include <QMutex>
+
+#include <qmdnsengine/server.h>
+#include <qmdnsengine/service.h>
+#include <qmdnsengine/hostname.h>
+#include <qmdnsengine/provider.h>
+
+
+class Df1ServiceAdvertiser : public QObject {
+
+	private:
+		QMdnsEngine::Server m_server;
+		QMdnsEngine::Hostname m_hostname;
+		QMdnsEngine::Provider *m_provider;
+
+
+	public:
+		Df1ServiceAdvertiser(QString name,quint16 port,QObject *parent = nullptr) : 
+			QObject(parent),
+			m_server(),
+			m_hostname(&m_server),
+			m_provider(nullptr)
+		{
+			QMdnsEngine::Service service;
+			service.setName(name.toUtf8());
+			service.setType("_test._tcp._local.");
+			service.setPort(port);
+			m_provider = new QMdnsEngine::Provider(&m_server,&m_hostname,this);
+			m_provider->update(service);
+		}
+};
+
+
 class Df1Socket : public QObject {
 
 	public:
@@ -12,24 +46,32 @@ class Df1Socket : public QObject {
 			QObject(parent),
 			m_server(new QWebSocketServer(QStringLiteral("Df1 Server"),QWebSocketServer::NonSecureMode,this))
 		{
-			m_slaveserial = new SlaveSerial(parent);
-			//m_slaveserial.startSerial(comName);
+			//m_slaveserial = new SlaveSerial(parent);
+			initialize(comName.toStdString().c_str());
 			if(m_server->listen(QHostAddress::Any,port)) {
 				qDebug() << "Df1 Server listening on port " << port;
 
 				connect(m_server,&QWebSocketServer::newConnection,this,&Df1Socket::onNewConnection);
 				connect(m_server,&QWebSocketServer::closed,this,&Df1Socket::closed);
 			}
+
+			advertiser = new Df1ServiceAdvertiser("Df1 Service",port,parent);
 		}
 
 	private:
 		QWebSocketServer *m_server;
 		QList<QWebSocket*> m_clients;
+
 		SlaveSerial* m_slaveserial;
+		Df1ServiceAdvertiser* advertiser;
+
+		QMutex m_mutexSerial;
 
 
 	Q_SIGNALS:
-		void closed();
+		void closed() {
+			qDebug() << "Closing shop";
+		}
 
 	private Q_SLOTS:
 		void onNewConnection() {
@@ -44,8 +86,23 @@ class Df1Socket : public QObject {
 			m_clients << socket;
 		}
 		void processTextMessage(QString message) {
+			QWebSocket *client = qobject_cast<QWebSocket*>(sender());
 
-			m_slaveserial->executeCommand(message);
+			char* response = new char[255];
+
+			client->sendTextMessage("Sending your message "+message);
+
+			m_mutexSerial.lock();
+			client->sendTextMessage("Got mutex");
+			int ret = read_socket(message.toStdString().c_str(),response);
+			if(ret) {
+				client->sendTextMessage(response);
+			} else {
+				client->sendTextMessage("Error ");
+			}
+			
+			m_mutexSerial.unlock();
+			delete response;
 
 		}
 		void processBinaryMessage(QByteArray message) {
@@ -65,22 +122,13 @@ class Df1Socket : public QObject {
 
 };
 
-
-
 extern word tns;
 int file;
 
 int main(int argc, char* argv[]) {
-	//QApplication app(argc,argv);
-	//return app.exec()
-	char* respo = new char[255];
-	char* msg = "N7:0=7";
-	char* msg2 = "N7:0";
+	QApplication app(argc,argv);
+	quint16 port = 4500;
+	Df1Socket socket(port);
 
-	int ret = read_socket(msg,respo);
-
-	printf("Return %d %s\n",ret,respo);
-
-
-
+	return app.exec();
 }
